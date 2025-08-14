@@ -1,16 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Star } from 'lucide-react';
 import { MarketCard } from '../components/MarketCard';
+import { LoadingIndicator } from '../components/LoadingIndicator';
 import { mockMarkets } from '../data/mockData';
 
 export function MarketFeed({ onMarketSelect }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [favorites, setFavorites] = useState(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [markets, setMarkets] = useState([]);
 
   const categories = ['all', 'crypto', 'sports', 'politics'];
 
-  const filteredMarkets = mockMarkets.filter(market => {
+  useEffect(() => {
+    // Simulate loading markets from API
+    const loadMarkets = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setMarkets(mockMarkets);
+      } catch (error) {
+        console.error('Failed to load markets:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMarkets();
+  }, []);
+
+  const filteredMarkets = markets.filter(market => {
     const matchesSearch = market.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          market.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || market.category === selectedCategory;
@@ -39,10 +60,11 @@ export function MarketFeed({ onMarketSelect }) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Search markets"
           />
         </div>
 
-        <div className="flex items-center space-x-2 overflow-x-auto">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-1">
           <Filter className="w-4 h-4 text-textSecondary flex-shrink-0" />
           {categories.map(category => (
             <button
@@ -53,6 +75,8 @@ export function MarketFeed({ onMarketSelect }) {
                   ? 'bg-primary text-white'
                   : 'bg-gray-100 text-textSecondary hover:bg-gray-200'
               }`}
+              aria-pressed={selectedCategory === category}
+              aria-label={`Filter by ${category}`}
             >
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </button>
@@ -60,35 +84,50 @@ export function MarketFeed({ onMarketSelect }) {
         </div>
       </div>
 
-      {/* Market Cards */}
-      <div className="space-y-4">
-        {filteredMarkets.map(market => (
-          <div key={market.id} className="relative">
-            <MarketCard
-              market={market}
-              onSelect={onMarketSelect}
-            />
-            <button
-              onClick={() => toggleFavorite(market.id)}
-              className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded"
-            >
-              <Star
-                className={`w-4 h-4 ${
-                  favorites.has(market.id)
-                    ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-textSecondary'
-                }`}
-              />
-            </button>
+      {/* Loading State */}
+      {isLoading ? (
+        <LoadingIndicator 
+          variant="skeleton" 
+          count={5} 
+          className="my-4"
+          aria-label="Loading markets"
+        />
+      ) : (
+        <>
+          {/* Market Cards */}
+          <div className="space-y-4">
+            {filteredMarkets.map(market => (
+              <div key={market.id} className="relative">
+                <MarketCard
+                  market={market}
+                  onSelect={onMarketSelect}
+                />
+                <button
+                  onClick={() => toggleFavorite(market.id)}
+                  className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded"
+                  aria-label={favorites.has(market.id) ? "Remove from favorites" : "Add to favorites"}
+                  aria-pressed={favorites.has(market.id)}
+                >
+                  <Star
+                    className={`w-4 h-4 ${
+                      favorites.has(market.id)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-textSecondary'
+                    }`}
+                  />
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {filteredMarkets.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-textSecondary">No markets found matching your criteria.</p>
-        </div>
+          {filteredMarkets.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-textSecondary">No markets found matching your criteria.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
+

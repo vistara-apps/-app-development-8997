@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Brain, Sparkles, Lock } from 'lucide-react';
 import { usePaymentContext } from '../hooks/usePaymentContext';
+import { LoadingIndicator } from './LoadingIndicator';
 
 export function InsightPrompt({ market, variant = 'userQuery' }) {
   const [paid, setPaid] = useState(false);
@@ -46,10 +47,12 @@ export function InsightPrompt({ market, variant = 'userQuery' }) {
             <h4 className="font-medium text-purple-900 mb-2">AI Market Insight</h4>
             <div className="text-sm text-purple-800 whitespace-pre-line">
               {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                  <span>Analyzing market data...</span>
-                </div>
+                <LoadingIndicator 
+                  variant="inline" 
+                  size="sm" 
+                  text="Analyzing market data..." 
+                  className="text-purple-800"
+                />
               ) : (
                 insight
               )}
@@ -76,10 +79,17 @@ export function InsightPrompt({ market, variant = 'userQuery' }) {
         <button
           onClick={handleGetInsight}
           disabled={loading}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          aria-label="Purchase AI insight"
         >
-          <Lock className="w-4 h-4" />
-          <span>$0.50</span>
+          {loading ? (
+            <LoadingIndicator variant="button" size="sm" />
+          ) : (
+            <>
+              <Lock className="w-4 h-4" />
+              <span>$0.50</span>
+            </>
+          )}
         </button>
       </div>
       
@@ -87,3 +97,4 @@ export function InsightPrompt({ market, variant = 'userQuery' }) {
     </div>
   );
 }
+
