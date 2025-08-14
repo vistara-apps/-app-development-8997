@@ -1,13 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Target, DollarSign, Lock } from 'lucide-react';
 import { AnalyticsChart } from '../components/AnalyticsChart';
+import { LoadingIndicator } from '../components/LoadingIndicator';
 import { mockAnalytics } from '../data/mockData';
 import { usePaymentContext } from '../hooks/usePaymentContext';
 
 export function Analytics() {
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
   const { createPremiumAccess } = usePaymentContext();
+
+  useEffect(() => {
+    // Simulate loading analytics data
+    const loadAnalytics = async () => {
+      setDataLoading(true);
+      try {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        setAnalytics(mockAnalytics);
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, []);
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -20,6 +41,20 @@ export function Analytics() {
     setLoading(false);
   };
 
+  if (dataLoading) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold text-textPrimary mb-6">Analytics Dashboard</h1>
+        <LoadingIndicator 
+          variant="skeleton" 
+          count={4} 
+          className="mb-6"
+          aria-label="Loading analytics data"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-textPrimary mb-6">Analytics Dashboard</h1>
@@ -31,7 +66,7 @@ export function Analytics() {
             <h3 className="text-sm font-medium text-textSecondary">Win Rate</h3>
             <Target className="w-4 h-4 text-green-500" />
           </div>
-          <div className="text-2xl font-bold text-textPrimary">{mockAnalytics.winRate}%</div>
+          <div className="text-2xl font-bold text-textPrimary">{analytics.winRate}%</div>
         </div>
 
         <div className="bg-surface rounded-lg shadow-card p-4">
@@ -40,7 +75,7 @@ export function Analytics() {
             <DollarSign className="w-4 h-4 text-green-500" />
           </div>
           <div className="text-2xl font-bold text-green-600">
-            ${mockAnalytics.totalProfit}
+            ${analytics.totalProfit}
           </div>
         </div>
 
@@ -49,7 +84,7 @@ export function Analytics() {
             <h3 className="text-sm font-medium text-textSecondary">Total Bets</h3>
             <TrendingUp className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="text-2xl font-bold text-textPrimary">{mockAnalytics.totalBets}</div>
+          <div className="text-2xl font-bold text-textPrimary">{analytics.totalBets}</div>
         </div>
 
         <div className="bg-surface rounded-lg shadow-card p-4">
@@ -58,7 +93,7 @@ export function Analytics() {
             <TrendingUp className="w-4 h-4 text-primary" />
           </div>
           <div className="text-sm font-bold text-textPrimary capitalize">
-            {mockAnalytics.bestCategory}
+            {analytics.bestCategory}
           </div>
         </div>
       </div>
@@ -104,12 +139,29 @@ export function Analytics() {
             </div>
           </div>
 
+          {/* Preview of premium charts (blurred) */}
+          <div className="relative mb-4 overflow-hidden rounded-lg">
+            <div className="opacity-50 blur-sm pointer-events-none">
+              <AnalyticsChart variant="line" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-purple-900/70 text-white px-4 py-2 rounded-full text-sm font-medium">
+                Premium Feature
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={handleUpgrade}
             disabled={loading}
             className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            aria-label="Upgrade to premium analytics"
           >
-            {loading ? 'Processing...' : 'Upgrade for $2/month'}
+            {loading ? (
+              <LoadingIndicator variant="button" size="sm" text="Processing..." />
+            ) : (
+              'Upgrade for $2/month'
+            )}
           </button>
         </div>
       ) : (
@@ -121,3 +173,4 @@ export function Analytics() {
     </div>
   );
 }
+

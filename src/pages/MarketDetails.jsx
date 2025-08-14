@@ -2,17 +2,47 @@ import { useState } from 'react';
 import { ArrowLeft, Calendar, Users, DollarSign, ExternalLink } from 'lucide-react';
 import { BettingButton } from '../components/BettingButton';
 import { InsightPrompt } from '../components/InsightPrompt';
+import { BetConfirmationModal } from '../components/BetConfirmationModal';
+import { useToastContext } from '../App';
 
 export function MarketDetails({ market, onBack, onBet }) {
   const [selectedBet, setSelectedBet] = useState(null);
+  const [betData, setBetData] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToastContext();
 
   const handleBetClick = (type) => {
     setSelectedBet(type);
   };
 
-  const handlePlaceBet = (betData) => {
-    onBet(betData);
-    setSelectedBet(null);
+  const handlePlaceBet = (data) => {
+    setBetData(data);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBet = async (data) => {
+    setIsSubmitting(true);
+    try {
+      // Simulate transaction time
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Call the parent onBet function
+      onBet(data);
+      
+      // Reset state
+      setSelectedBet(null);
+      setBetData(null);
+      setShowConfirmation(false);
+      
+      // Show success toast
+      toast.showSuccess(`Bet placed successfully! ${data.prediction.toUpperCase()} for $${data.amount}`);
+    } catch (error) {
+      console.error('Bet failed:', error);
+      toast.showError('Failed to place bet. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -22,6 +52,7 @@ export function MarketDetails({ market, onBack, onBet }) {
         <button
           onClick={onBack}
           className="mr-4 p-2 hover:bg-gray-100 rounded-full"
+          aria-label="Go back"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -133,6 +164,17 @@ export function MarketDetails({ market, onBack, onBet }) {
           </p>
         </div>
       </div>
+
+      {/* Bet Confirmation Modal */}
+      <BetConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        onConfirm={handleConfirmBet}
+        betData={betData}
+        market={market}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }
+
